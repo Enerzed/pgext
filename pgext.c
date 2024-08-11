@@ -102,8 +102,8 @@ Datum convert_all(PG_FUNCTION_ARGS)
 
         old_context = MemoryContextSwitchTo(func_context->multi_call_memory_ctx);
 
-        func_context->max_calls = NUMBER_OF_UNITS;  // Number of other units
-        func_context->user_fctx = (void *) from_unit_id; // Store original unit id
+        func_context->max_calls = NUMBER_OF_UNITS;
+        func_context->user_fctx = (void *) from_unit_id;
     }
     else
     {
@@ -114,10 +114,10 @@ Datum convert_all(PG_FUNCTION_ARGS)
 
     if (func_context->call_cntr < func_context->max_calls) 
     {
-        unit_obj *result = (unit_obj *) palloc(sizeof(unit_obj)); // Allocate memory for result
-        result->value = x * conversion_table[from_id][func_context->call_cntr]; // Only converting properly here
+        unit_obj *result = (unit_obj *) palloc(sizeof(unit_obj));
+        result->value = x * conversion_table[from_id][func_context->call_cntr];
         strncpy(result->unit_type, get_unit_type(func_context->call_cntr), sizeof(result->unit_type) - 1);
-        result->unit_type[sizeof(result->unit_type) - 1] = '\0'; // Null-terminate
+        result->unit_type[sizeof(result->unit_type) - 1] = '\0';
         SRF_RETURN_NEXT(func_context, PointerGetDatum(result));
     }
     else
