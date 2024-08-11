@@ -1,0 +1,5 @@
+# pgext extension
+comment = 'PostgreSQL extension'
+default_version = '0.1'
+module_pathname = '$libdir/pgext'
+relocatable = true
