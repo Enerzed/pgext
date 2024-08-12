@@ -1,6 +1,7 @@
 EXTENSION = pgext
 MODULES = pgext
 DATA = pgext--0.1.sql pgext.control
+REGRESS = pgext
 
 LDFLAGS =- lrt
 
