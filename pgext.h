@@ -10,14 +10,18 @@
 #include "utils/elog.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
-#include "utils/guc.h"
+#include "utils/guc.h"          // DefineCustomBoolVariable, отключил логирование
 #include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
-#include "funcapi.h"
+#include "storage/lwlock.h"
+#include "postmaster/bgworker.h"
+#include "funcapi.h"            // SRF
 #include <string.h>
 
 
-#define NUMBER_OF_UNITS 8
+#define NUMBER_OF_UNITS 8       // Количество единиц измерения
+static bool enable_logging = false;
+
 
 PG_MODULE_MAGIC;                // Макрос, определяющий, что это модуль для PostgreSQL
 
@@ -27,22 +31,8 @@ typedef struct
     char unit_type[32];
 } unit_obj;
 
-bool enable_logging = false;
 
-void _PG_init(void)
-{
-    DefineCustomBoolVariable
-    ("pgext.enable_logging",
-    "Enable logging for unit conversion extension (pgext)",
-    NULL,
-    &enable_logging,
-    false,
-    PGC_USERSET,
-    0,
-    NULL,
-    NULL,
-    NULL);
-}
+void _PG_init(void);
 
 // Таблица с коеффициентами для перевода величин следующего вида
 /*

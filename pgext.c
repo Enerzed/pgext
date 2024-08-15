@@ -6,18 +6,36 @@
 #include "pgext.h"
 
 
+void _PG_init(void)
+{
+    DefineCustomBoolVariable
+    ("pgext.enable_logging",
+    "Enable logging for unit conversion extension (pgext)",
+    NULL,
+    &enable_logging,
+    false,
+    PGC_USERSET,
+    0,
+    NULL,
+    NULL,
+    NULL);
+}
+
 static unit_obj* cstring_to_unit_obj(char *cstring)
 {
     double value;
     char unit_type[32];
 
-    if(sscanf(cstring, "(%lf, %s)", value, unit_type) != 2)
+    if(sscanf(cstring, "(%lf, %s)", &value, &unit_type[32]) != 2)
     {
-        ereport(ERROR, errcode(ERRCODE_INVALID_TEXT_REPRESENTATION), errmsg("Invalid input for unit_obj", cstring));
+        ereport(ERROR, errcode(ERRCODE_INVALID_TEXT_REPRESENTATION), errmsg("Invalid input for unit_obj %s", cstring));
     }
     unit_obj *unit = (unit_obj*) palloc(sizeof(unit_obj));
+
     unit->value = value;
     strcpy(unit->unit_type, unit_type);
+
+    return unit;
 }
 
 static char* unit_obj_to_cstring(unit_obj *unit)
@@ -36,7 +54,7 @@ Datum unit_obj_in(PG_FUNCTION_ARGS)
 PG_FUNCTION_INFO_V1(unit_obj_out);
 Datum unit_obj_out(PG_FUNCTION_ARGS)
 {
-    unit_obj *unit = PG_GETARG_POINTER(0);
+    unit_obj* unit = PG_GETARG_POINTER(0);
     PG_RETURN_CSTRING(unit_obj_to_cstring(unit));
 }
 
@@ -51,8 +69,8 @@ Datum text_to_unit_obj(PG_FUNCTION_ARGS)
 PG_FUNCTION_INFO_V1(unit_obj_to_text);
 Datum unit_obj_to_text(PG_FUNCTION_ARGS)
 {
-    unit_obj *unit = PG_GETARG_POINTER(0);
-    text *out = DirectFunctionCall1(textin, PointerGetDatum(unit_obj_to_cstring(unit)));
+    unit_obj* unit = PG_GETARG_POINTER(0);
+    text* out = DirectFunctionCall1(textin, PointerGetDatum(unit_obj_to_cstring(unit)));
     PG_RETURN_TEXT_P(out);
 }
 
@@ -67,7 +85,7 @@ Datum convert_exact(PG_FUNCTION_ARGS)
 
     if (from_unit_id == -1 || to_unit_id == -1)
     {
-        elog(ERROR, "unsupported type for conversion");
+        ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("unsupported unit type for conversion: %s to %s", from_unit, to_unit)));
     }
 
     double result;
@@ -87,9 +105,7 @@ Datum convert_all(PG_FUNCTION_ARGS)
 
     if (from_unit_id == -1)
     {
-        ereport(ERROR, 
-                (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                 errmsg("unsupported unit type for conversion: %s", from_unit)));
+        ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("unsupported unit type for conversion: %s", from_unit)));
     }
 
     FuncCallContext *func_context;
@@ -103,19 +119,18 @@ Datum convert_all(PG_FUNCTION_ARGS)
         old_context = MemoryContextSwitchTo(func_context->multi_call_memory_ctx);
 
         func_context->max_calls = NUMBER_OF_UNITS;
-        func_context->user_fctx = (void *) from_unit_id;
+
+        MemoryContextSwitchTo(old_context);
     }
     else
     {
         func_context = SRF_PERCALL_SETUP();
     }
 
-    int from_id = (int) func_context->user_fctx;
-
     if (func_context->call_cntr < func_context->max_calls) 
     {
         unit_obj *result = (unit_obj *) palloc(sizeof(unit_obj));
-        result->value = x * conversion_table[from_id][func_context->call_cntr];
+        result->value = x * conversion_table[from_unit_id][func_context->call_cntr];
         strncpy(result->unit_type, get_unit_type(func_context->call_cntr), sizeof(result->unit_type) - 1);
         result->unit_type[sizeof(result->unit_type) - 1] = '\0';
         SRF_RETURN_NEXT(func_context, PointerGetDatum(result));
@@ -162,8 +177,9 @@ static char* get_unit_type(int unit_id)
             case 5: return "foot"; break;
             case 6: return "yard"; break;
             case 7: return "mile"; break;
-            default: elog(ERROR, "unsupported type for conversion"); return "ERROR CONVERSION TYPE"; break;
+            default: ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("unsupported unit type for conversion: %i", unit_id)));
+            break;
         }
     }
-    return "ERROR CONVERSION TYPE";
+    return "UNIT DOES NOT EXISTS";
 }
