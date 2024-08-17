@@ -152,22 +152,21 @@ static int get_unit_id(char *unit_type)
 {
     if (strcmp(unit_type, "millimeter") == 0)
         return 0;
-    else if (strcmp(unit_type, "centimeter") == 0)
+    if (strcmp(unit_type, "centimeter") == 0)
         return 1;
-    else if (strcmp(unit_type, "meter") == 0)
+    if (strcmp(unit_type, "meter") == 0)
         return 2;
-    else if (strcmp(unit_type, "kilometer") == 0)
+    if (strcmp(unit_type, "kilometer") == 0)
         return 3;
-    else if (strcmp(unit_type, "inch") == 0)
+    if (strcmp(unit_type, "inch") == 0)
         return 4;
-    else if (strcmp(unit_type, "foot") == 0)
+    if (strcmp(unit_type, "foot") == 0)
         return 5;
-    else if (strcmp(unit_type, "yard") == 0)
+    if (strcmp(unit_type, "yard") == 0)
         return 6;
-    else if (strcmp(unit_type, "mile") == 0)
+    if (strcmp(unit_type, "mile") == 0)
         return 7;
-    else
-        return -1;
+    return -1;
 }
 
 static char* get_unit_type(int unit_id)
