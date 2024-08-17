@@ -21,6 +21,7 @@ void _PG_init(void)
     NULL);
 }
 
+
 static unit_obj* cstring_to_unit_obj(char *cstring)
 {
     double value;
@@ -38,11 +39,13 @@ static unit_obj* cstring_to_unit_obj(char *cstring)
     return unit;
 }
 
+
 static char* unit_obj_to_cstring(unit_obj *unit)
 {
     char *cstring = psprintf("(%lf, %s)", unit->value, unit->unit_type);
     return cstring;
 }
+
 
 PG_FUNCTION_INFO_V1(unit_obj_in);
 Datum unit_obj_in(PG_FUNCTION_ARGS)
@@ -51,12 +54,14 @@ Datum unit_obj_in(PG_FUNCTION_ARGS)
     PG_RETURN_POINTER(cstring_to_unit_obj(cstring));
 }
 
+
 PG_FUNCTION_INFO_V1(unit_obj_out);
 Datum unit_obj_out(PG_FUNCTION_ARGS)
 {
     unit_obj* unit = PG_GETARG_POINTER(0);
     PG_RETURN_CSTRING(unit_obj_to_cstring(unit));
 }
+
 
 PG_FUNCTION_INFO_V1(text_to_unit_obj);
 Datum text_to_unit_obj(PG_FUNCTION_ARGS)
@@ -66,6 +71,7 @@ Datum text_to_unit_obj(PG_FUNCTION_ARGS)
     PG_RETURN_POINTER(cstring_to_unit_obj(str));
 }
 
+
 PG_FUNCTION_INFO_V1(unit_obj_to_text);
 Datum unit_obj_to_text(PG_FUNCTION_ARGS)
 {
@@ -73,6 +79,7 @@ Datum unit_obj_to_text(PG_FUNCTION_ARGS)
     text* out = DirectFunctionCall1(textin, PointerGetDatum(unit_obj_to_cstring(unit)));
     PG_RETURN_TEXT_P(out);
 }
+
 
 PG_FUNCTION_INFO_V1(convert_exact);
 Datum convert_exact(PG_FUNCTION_ARGS)
@@ -90,11 +97,11 @@ Datum convert_exact(PG_FUNCTION_ARGS)
 
     double result;
 
-    // Конвертация
     result = x * conversion_table[from_unit_id][to_unit_id];
 
     PG_RETURN_FLOAT8(result);
 }
+
 
 PG_FUNCTION_INFO_V1(convert_all);
 Datum convert_all(PG_FUNCTION_ARGS)

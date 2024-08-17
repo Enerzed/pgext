@@ -5,12 +5,12 @@
 #pragma once
 
 
-#include "postgres.h"           // Содержит различные базовые типы и функции
-#include "fmgr.h"               // PG_* макросы
+#include "postgres.h"           // Basic types and functions for Postgres
+#include "fmgr.h"               // PG_* macro
 #include "utils/elog.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
-#include "utils/guc.h"          // DefineCustomBoolVariable, отключил логирование
+#include "utils/guc.h"          // DefineCustomBoolVariable, used to disable logging
 #include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
 #include "storage/lwlock.h"
@@ -19,22 +19,28 @@
 #include <string.h>
 
 
-#define NUMBER_OF_UNITS 8       // Количество единиц измерения
+// Total number of units 
+#define NUMBER_OF_UNITS 8
+
+
+// GUC variable to disable loggin
 static bool enable_logging = false;
 
 
-PG_MODULE_MAGIC;                // Макрос, определяющий, что это модуль для PostgreSQL
+// Macro to define Postgres extension
+PG_MODULE_MAGIC;
 
+// Struct for the units
 typedef struct
 {
     double value;
     char unit_type[32];
 } unit_obj;
 
-
+// Init function, defined GUC variable here
 void _PG_init(void);
 
-// Таблица с коеффициентами для перевода величин следующего вида
+// Table with coefficients for conversion that has the folowing structure
 /*
                 millimeter  | centimeter    | meter | kilometer | inch  | foot  | yard  | mile  |
 millimeter  |               |               |       |           |       |       |       |       |
@@ -56,18 +62,27 @@ static double conversion_table[8][8] =
 {914.4, 91.44, 0.9144, 0.0009144, 36, 3, 1, 0.000568182},
 {1609344, 160934.4, 1609.344, 1.609344, 63360, 5280, 1760, 1}};
 
-// Datum - универсальный тип в PostgreSQL
-// PG_FUNCTION_ARGS - аргументы функции в PostgreSQL, может определять любое количество параметров
-// Названия функций говорят сами за себя
+// Datum - universal type in Postgres
+// PG_FUNCTION_ARGS - parameters in Postgres functions, can define varialbe number of parameters
+
+// Converts unit_obj to cstring and vice versa
 static unit_obj* cstring_to_unit_obj(char *);
 static char* unit_obj_to_cstring(unit_obj *);
 
+// Converts unit_obj to text and vice versa
 Datum unit_obj_to_text(PG_FUNCTION_ARGS);
 Datum text_to_unit_obj(PG_FUNCTION_ARGS);
+
+// Input and output functions for unit_obj type
 Datum unit_obj_in(PG_FUNCTION_ARGS);
 Datum unit_obj_out(PG_FUNCTION_ARGS);
+
+// Converts from one unit to other unit
 Datum convert_exact(PG_FUNCTION_ARGS);
+
+// Convets from one unit to all other units
 Datum convert_all(PG_FUNCTION_ARGS);
 
+// Functions to get unit id from unit type and vice versa
 static int get_unit_id(char *);
 static char* get_unit_type(int);

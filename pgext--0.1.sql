@@ -2,29 +2,31 @@
 \echo Use "CREATE EXTENSION pgext" to load this file. \quit
 
 
--- SQL функции
+-- Converts from one unit to other unit
 CREATE OR REPLACE FUNCTION convert_exact(double precision, text, text)
 RETURNS double precision
 AS 'MODULE_PATHNAME', 'convert_exact'
 LANGUAGE C IMMUTABLE STRICT;
 
-
+-- Converts from one unit to all other units
 CREATE OR REPLACE FUNCTION convert_all(double precision, text)
 RETURNS SETOF unit_obj
 AS 'MODULE_PATHNAME', 'convert_all'
 LANGUAGE C IMMUTABLE STRICT;
 
+-- Had to add INPUT function for unit_obj type
 CREATE OR REPLACE FUNCTION unit_obj_in(cstring)
 RETURNS unit_obj
 AS 'MODULE_PATHNAME', 'unit_obj_in'
 LANGUAGE C IMMUTABLE STRICT;
 
+-- Had to add OUTPUT function for unit_obj type
 CREATE OR REPLACE FUNCTION unit_obj_out(unit_obj)
 RETURNS cstring
 AS 'MODULE_PATHNAME', 'unit_obj_out'
 LANGUAGE C IMMUTABLE STRICT;
 
---  единица измерения (значение и имя)
+--  Measuring unit (value and unit type)
 CREATE TYPE unit_obj
 (
     INPUT = unit_obj_in,
@@ -33,6 +35,7 @@ CREATE TYPE unit_obj
 );
 COMMENT ON TYPE unit_obj IS 'Composite type with value (double) and unit_type (char[32])';
 
+-- Converts unit_obj to text and vice versa
 CREATE OR REPLACE FUNCTION unit_obj(text)
 RETURNS unit_obj
 AS 'MODULE_PATHNAME', 'text_to_unit_obj'
