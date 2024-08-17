@@ -1,0 +1,6 @@
+#ignore results of regress tests
+results/
+
+#ignore build files
+*.o
+*.dylib
